@@ -41,7 +41,9 @@ class Recipe(models.Model):
     text = models.TextField(
         verbose_name="Описание рецепта",
     )
-    ingredients = models.ManyToManyField(Ingredient, through='Quantity')
+    image = models.ImageField(upload_to='api/',
+                              verbose_name='Фотография рецепта')
+    ingredients = models.ManyToManyField(Ingredient, through='RecipeIngredient')
     tags = models.ManyToManyField(Tag, verbose_name="Тэг",)
     cooking_time = models.IntegerField(
         verbose_name="Время приготовления в минутах",
@@ -61,7 +63,7 @@ class Recipe(models.Model):
     #     ordering = ["-pub_date"]
 
 
-class Quantity(models.Model):
+class RecipeIngredient(models.Model):
     recipe = models.ForeignKey(
         Recipe,
         on_delete=models.CASCADE,
@@ -72,7 +74,7 @@ class Quantity(models.Model):
         on_delete=models.CASCADE,
         related_name="amount",
     )
-    value = models.IntegerField(verbose_name="Количество",)
+    amount = models.IntegerField(verbose_name="Количество",)
 
     # def __str__(self):
     #     return self.value

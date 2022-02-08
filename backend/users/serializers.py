@@ -13,6 +13,15 @@ class UserSerializer(serializers.ModelSerializer):
 
     def get_is_subscribed(self, obj):
         author = self.context['request'].user
-        if obj.follower.filter(author=author).exists():
-            return True
-        return False
+        if author.is_anonymous:
+            return False
+        return obj.follower.filter(author=author).exists()
+
+
+class PasswordSerializer(serializers.Serializer):
+    new_password = serializers.CharField(max_length=128)
+    current_password = serializers.CharField(max_length=128)
+
+    class Meta:
+        model = User
+        fields = ('new_password', 'current_password')
