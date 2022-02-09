@@ -1,35 +1,26 @@
 import io
 
-from django.db.models import Sum, F
+from django.db.models import F, Sum
 from django.http import FileResponse
-from django.shortcuts import get_object_or_404
 from django_filters.rest_framework import DjangoFilterBackend
 from reportlab.pdfbase import pdfmetrics
 from reportlab.pdfbase.ttfonts import TTFont
 from reportlab.pdfgen import canvas
-from rest_framework import mixins, viewsets, status, filters
+from rest_framework import filters, status
 from rest_framework.decorators import action
 from rest_framework.permissions import AllowAny
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework.viewsets import ModelViewSet
 
-from .models import (
-    Ingredient, Recipe, Tag, Favorite, Shopping, RecipeIngredient
-)
-from .serializers import (
-    IngredientSerializer, RecipeSerializer, TagSerializer, RecipeGetSerializer,
-    RecipeFollowSerializer
-)
 from users.permissions import AuthorOrReadOnly
 
-
-class ListRetrieveViewSet(
-    mixins.RetrieveModelMixin,
-    mixins.ListModelMixin,
-    viewsets.GenericViewSet,
-):
-    pass
+from .mixins import ListRetrieveViewSet
+from .models import (Favorite, Ingredient, Recipe, RecipeIngredient, Shopping,
+                     Tag)
+from .serializers import (IngredientSerializer, RecipeFollowSerializer,
+                          RecipeGetSerializer, RecipeSerializer, TagSerializer)
+from .utils import delete, post
 
 
 class IngredientViewSet(ListRetrieveViewSet):
@@ -37,7 +28,7 @@ class IngredientViewSet(ListRetrieveViewSet):
     serializer_class = IngredientSerializer
     permission_classes = (AllowAny, )
     filter_backends = (filters.SearchFilter,)
-    search_fields = ('name',)
+    search_fields = ("name",)
 
 
 class TagViewSet(ListRetrieveViewSet):
@@ -49,7 +40,7 @@ class TagViewSet(ListRetrieveViewSet):
 class RecipeViewSet(ModelViewSet):
     queryset = Recipe.objects.all()
     filter_backends = (DjangoFilterBackend,)
-    filterset_fields = ('author',  'tags',)
+    filterset_fields = ("author", "tags",)
     # 'is_favorited', 'is_in_shopping_cart',
 
     def destroy(self, request, *args, **kwargs):
@@ -62,64 +53,26 @@ class RecipeViewSet(ModelViewSet):
         serializer.save(author=self.request.user)
 
     def get_serializer_class(self):
-        if self.request.method == 'GET':
+        if self.request.method == "GET":
             return RecipeGetSerializer
         return RecipeSerializer
 
     def get_permissions(self):
-        if self.action != 'create':
+        if self.action != "create":
             return (AuthorOrReadOnly(),)
         return super().get_permissions()
 
-    @action(detail=True, methods=['post', 'delete'], )
+    @action(detail=True, methods=["post", "delete"],)
     def favorite(self, request, pk):
-        recipe = get_object_or_404(Recipe, pk=pk)
-        if self.request.method == 'POST':
-            if Favorite.objects.filter(
-                    user=self.request.user, favorite=recipe).exists():
-                return Response({"errors": "Рецепт уже в списке избранного"},
-                                status=status.HTTP_400_BAD_REQUEST)
-            Favorite.objects.create(user=self.request.user, favorite=recipe)
-            data = RecipeFollowSerializer(recipe).data
-            return Response(data, status=status.HTTP_201_CREATED)
-        if Favorite.objects.filter(user=self.request.user,
-                                   favorite=recipe).exists():
-            follow = get_object_or_404(Favorite, user=request.user,
-                                       favorite=recipe)
-            follow.delete()
-            return Response(
-                "Рецепт успешно удален из избранного",
-                status=status.HTTP_204_NO_CONTENT
-            )
-        return Response(
-            {"errors": "Данного рецепта не было в списке избранного"},
-            status=status.HTTP_400_BAD_REQUEST
-        )
+        if self.request.method == "POST":
+            return post(request, pk, Favorite, RecipeFollowSerializer)
+        return delete(request, pk, Favorite)
 
-    @action(detail=True, methods=['post', 'delete'], )
+    @action(detail=True, methods=["post", "delete"],)
     def shopping_cart(self, request, pk):
-        recipe = get_object_or_404(Recipe, pk=pk)
-        if request.method == 'POST':
-            if Shopping.objects.filter(
-                    user=self.request.user, shopping=recipe).exists():
-                return Response({"errors": "Рецепт уже в списке покупок"},
-                                status=status.HTTP_400_BAD_REQUEST)
-            Shopping.objects.create(user=request.user, shopping=recipe)
-            data = RecipeFollowSerializer(recipe).data
-            return Response(data, status=status.HTTP_201_CREATED)
-        if Shopping.objects.filter(
-                user=self.request.user, shopping=recipe).exists():
-            follow = get_object_or_404(Shopping, user=request.user,
-                                       shopping=recipe)
-            follow.delete()
-            return Response(
-                "Рецепт успешно удален из списка покупок",
-                status=status.HTTP_204_NO_CONTENT
-            )
-        return Response(
-            {"errors": "Данного рецепта не было в списке покупок"},
-            status=status.HTTP_400_BAD_REQUEST
-        )
+        if request.method == "POST":
+            return post(request, pk, Shopping, RecipeFollowSerializer)
+        return delete(request, pk, Shopping)
 
 
 class ShoppingCardView(APIView):
@@ -128,12 +81,12 @@ class ShoppingCardView(APIView):
         user = request.user
         shopping_list = RecipeIngredient.objects.filter(
             recipe__shopping__user=user).values(
-            name=F('ingredient__name'),
-            unit=F('ingredient__measurement_unit')
-        ).annotate(amount=Sum('value')).order_by()
-        font = 'DejaVuSerif'
+            name=F("ingredient__name"),
+            unit=F("ingredient__measurement_unit")
+        ).annotate(amount=Sum("amount"))
+        font = "DejaVuSerif"
         pdfmetrics.registerFont(
-            TTFont('DejaVuSerif', 'DejaVuSerif.ttf', 'UTF-8')
+            TTFont("DejaVuSerif", "DejaVuSerif.ttf", "UTF-8")
         )
         buffer = io.BytesIO()
         pdf_file = canvas.Canvas(buffer)
@@ -141,7 +94,7 @@ class ShoppingCardView(APIView):
         pdf_file.drawString(
             150,
             800,
-            'Список покупок.'
+            "Список покупок."
         )
         pdf_file.setFont(font, 14)
         from_bottom = 750
@@ -161,5 +114,5 @@ class ShoppingCardView(APIView):
         pdf_file.save()
         buffer.seek(0)
         return FileResponse(
-            buffer, as_attachment=True, filename='shopping_list.pdf'
+            buffer, as_attachment=True, filename="shopping_list.pdf"
         )

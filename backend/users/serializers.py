@@ -1,4 +1,5 @@
 from rest_framework import serializers
+
 from .models import User
 
 
@@ -7,12 +8,12 @@ class UserSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = User
-        fields = ('id', 'email', 'first_name', 'last_name',
-                  'username', 'is_subscribed',)
-        read_only_fields = ('id',)
+        fields = ("id", "email", "first_name", "last_name",
+                  "username", "is_subscribed",)
+        read_only_fields = ("id",)
 
     def get_is_subscribed(self, obj):
-        author = self.context['request'].user
+        author = self.context["request"].user
         if author.is_anonymous:
             return False
         return obj.follower.filter(author=author).exists()
@@ -24,4 +25,4 @@ class PasswordSerializer(serializers.Serializer):
 
     class Meta:
         model = User
-        fields = ('new_password', 'current_password')
+        fields = ("new_password", "current_password")

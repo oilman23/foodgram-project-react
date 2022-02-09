@@ -1,17 +1,17 @@
 from django.core.exceptions import ObjectDoesNotExist
 from django.shortcuts import get_object_or_404
-from rest_framework import mixins, viewsets, status
-from rest_framework.authtoken.views import ObtainAuthToken
+from rest_framework import mixins, status, viewsets
 from rest_framework.decorators import action
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework.viewsets import ModelViewSet
 
+from api.serializers import FollowingSerializer, FollowSerializer
+
+from .models import Follow, User
 from .permissions import AuthorOrReadOnly
-from .serializers import UserSerializer, PasswordSerializer
-from .models import User, Follow
-from api.serializers import FollowSerializer, FollowingSerializer
+from .serializers import PasswordSerializer, UserSerializer
 
 
 class CreateDestroyViewSet(
@@ -26,20 +26,19 @@ class UserViewSet(ModelViewSet):
     queryset = User.objects.all()
     serializer_class = UserSerializer
     permission_classes = (AuthorOrReadOnly, )
-    lookup_field = 'id'
+    lookup_field = "id"
 
-    @action(detail=False, methods=['get'],
+    @action(detail=False, methods=["get"],
             permission_classes=[IsAuthenticated])
     def me(self, request):
-        if self.request.method == 'GET':
-            data = UserSerializer(self.request.user,
-                                  context={'request': request}).data
-            return Response(data)
+        data = UserSerializer(self.request.user,
+                              context={"request": request}).data
+        return Response(data)
 
-    @action(detail=True, methods=['post', 'delete'],)
+    @action(detail=True, methods=["post", "delete"],)
     def subscribe(self, request, id):
         author = get_object_or_404(User, id=id)
-        if self.request.method == 'POST':
+        if self.request.method == "POST":
             if Follow.objects.filter(
                     user=request.user, author=author).exists():
                 return Response(
@@ -48,23 +47,25 @@ class UserViewSet(ModelViewSet):
                 )
             if request.user != author:
                 Follow.objects.create(user=request.user, author=author)
-                data = FollowSerializer(author, context={'request': request}).data
+                data = FollowSerializer(author,
+                                        context={"request": request}).data
                 return Response(data)
             return Response({"errors": "Нельзя подписаться на свой аккаунт"},
                             status=status.HTTP_400_BAD_REQUEST)
         if Follow.objects.filter(user=request.user, author=author).exists():
-            follow = get_object_or_404(Follow, user=request.user, author=author)
+            follow = get_object_or_404(Follow, user=request.user,
+                                       author=author)
             follow.delete()
             return Response("Подписка успешно удалена",
                             status=status.HTTP_204_NO_CONTENT)
         return Response({"errors": "Вы не подписаны на данного пользователя"},
                         status=status.HTTP_400_BAD_REQUEST)
 
-    @action(detail=False, methods=['post'], )
+    @action(detail=False, methods=["post"], )
     def set_password(self, request):
         data = PasswordSerializer(request.data).data
-        if data['current_password'] == request.user.password:
-            request.user.password = data['new_password']
+        if data["current_password"] == request.user.password:
+            request.user.password = data["new_password"]
         return Response(status=status.HTTP_204_NO_CONTENT)
 
 
