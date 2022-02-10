@@ -1,6 +1,6 @@
 from django.core.exceptions import ObjectDoesNotExist
 from django.shortcuts import get_object_or_404
-from rest_framework import mixins, status, viewsets
+from rest_framework import status
 from rest_framework.decorators import action
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
@@ -12,14 +12,6 @@ from api.serializers import FollowingSerializer, FollowSerializer
 from .models import Follow, User
 from .permissions import AuthorOrReadOnly
 from .serializers import PasswordSerializer, UserSerializer
-
-
-class CreateDestroyViewSet(
-    mixins.DestroyModelMixin,
-    mixins.CreateModelMixin,
-    viewsets.GenericViewSet,
-):
-    pass
 
 
 class UserViewSet(ModelViewSet):

@@ -41,7 +41,6 @@ class RecipeViewSet(ModelViewSet):
     queryset = Recipe.objects.all()
     filter_backends = (DjangoFilterBackend,)
     filterset_fields = ("author", "tags",)
-    # 'is_favorited', 'is_in_shopping_cart',
 
     def destroy(self, request, *args, **kwargs):
         instance = self.get_object()
