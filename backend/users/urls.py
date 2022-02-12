@@ -1,8 +1,8 @@
 from django.urls import include, path
-from rest_framework.authtoken.views import obtain_auth_token
 from rest_framework.routers import DefaultRouter
 
 from . import views
+from .views import GetTokenAPI
 
 router_v1 = DefaultRouter()
 router_v1.register("users/subscriptions", views.FollowViewSet,
@@ -11,7 +11,7 @@ router_v1.register("users", views.UserViewSet)
 
 
 urlpatterns = [
-    path('', include(router_v1.urls)),
-    path("auth/token/login/", obtain_auth_token, name="login"),
+    path("", include(router_v1.urls)),
+    path("auth/token/login/", GetTokenAPI.as_view(), name="get_token"),
     path("auth/token/logout/", views.DeleteToken.as_view(), name="logout")
 ]

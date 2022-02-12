@@ -1,23 +1,23 @@
 from django.core.exceptions import ObjectDoesNotExist
 from django.shortcuts import get_object_or_404
-from rest_framework import status
+from rest_framework import generics, status
+from rest_framework.authtoken.models import Token
 from rest_framework.decorators import action
-from rest_framework.permissions import IsAuthenticated
+from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework.viewsets import ModelViewSet
 
-from api.serializers import FollowingSerializer, FollowSerializer
-
+from api.pagination import RecipePagination
+from api.serializers import FollowSerializer
 from .models import Follow, User
-from .permissions import AuthorOrReadOnly
-from .serializers import PasswordSerializer, UserSerializer
+from .serializers import GetTokenSerializer, PasswordSerializer, UserSerializer
 
 
 class UserViewSet(ModelViewSet):
     queryset = User.objects.all()
     serializer_class = UserSerializer
-    permission_classes = (AuthorOrReadOnly, )
+    permission_classes = (AllowAny, )
     lookup_field = "id"
 
     @action(detail=False, methods=["get"],
@@ -55,17 +55,41 @@ class UserViewSet(ModelViewSet):
 
     @action(detail=False, methods=["post"], )
     def set_password(self, request):
-        data = PasswordSerializer(request.data).data
-        if data["current_password"] == request.user.password:
-            request.user.password = data["new_password"]
-        return Response(status=status.HTTP_204_NO_CONTENT)
+        me = get_object_or_404(User, pk=request.user.pk)
+        serializer = PasswordSerializer(data=request.data)
+
+        if serializer.is_valid():
+            if not me.check_password(serializer.data.get("current_password")):
+                return Response({"current_password": ["Wrong password."]},
+                                status=status.HTTP_400_BAD_REQUEST)
+            me.set_password(serializer.data.get("new_password"))
+            me.save()
+            return Response(status=status.HTTP_204_NO_CONTENT)
+
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
 class FollowViewSet(ModelViewSet):
-    serializer_class = FollowingSerializer
+    serializer_class = FollowSerializer
+    pagination_class = RecipePagination
 
     def get_queryset(self):
-        return self.request.user.following
+        return User.objects.filter(following__user=self.request.user)
+
+
+class GetTokenAPI(generics.CreateAPIView):
+    serializer_class = GetTokenSerializer
+    permission_classes = (AllowAny,)
+
+    def post(self, request, *args, **kwargs):
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        user = serializer.validated_data
+        token, _ = Token.objects.get_or_create(user=user)
+        return Response({
+            "auth_token": str(token)},
+            status=status.HTTP_201_CREATED,
+        )
 
 
 class DeleteToken(APIView):

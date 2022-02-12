@@ -15,9 +15,11 @@ from rest_framework.viewsets import ModelViewSet
 
 from users.permissions import AuthorOrReadOnly
 
+from .filters import RecipeFilter
 from .mixins import ListRetrieveViewSet
 from .models import (Favorite, Ingredient, Recipe, RecipeIngredient, Shopping,
                      Tag)
+from .pagination import RecipePagination
 from .serializers import (IngredientSerializer, RecipeFollowSerializer,
                           RecipeGetSerializer, RecipeSerializer, TagSerializer)
 from .utils import delete, post
@@ -40,7 +42,18 @@ class TagViewSet(ListRetrieveViewSet):
 class RecipeViewSet(ModelViewSet):
     queryset = Recipe.objects.all()
     filter_backends = (DjangoFilterBackend,)
-    filterset_fields = ("author", "tags",)
+    filterset_class = RecipeFilter
+    pagination_class = RecipePagination
+
+    def get_queryset(self):
+        is_favorited = self.request.query_params.get("is_favorited")
+        if is_favorited is not None and int(is_favorited) == 1:
+            return Recipe.objects.filter(favorite__user=self.request.user)
+        is_in_shopping_cart = self.request.query_params.get(
+            "is_in_shopping_cart")
+        if is_in_shopping_cart is not None and int(is_in_shopping_cart) == 1:
+            return Recipe.objects.filter(shopping__user=self.request.user)
+        return Recipe.objects.all()
 
     def destroy(self, request, *args, **kwargs):
         instance = self.get_object()

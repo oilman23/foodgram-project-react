@@ -1,7 +1,7 @@
 from drf_extra_fields.fields import Base64ImageField
 from rest_framework import serializers
 
-from users.models import Follow, User
+from users.models import User
 from users.serializers import UserSerializer
 
 from .models import Ingredient, Recipe, RecipeIngredient, Tag
@@ -84,11 +84,12 @@ class RecipeSerializer(serializers.ModelSerializer):
         queryset=Tag.objects.all(),
         many=True,
     )
+    image = Base64ImageField(max_length=None, use_url=True)
 
     class Meta:
         model = Recipe
         fields = ("id", "author", "name", "text", "ingredients", "tags",
-                  "cooking_time",)
+                  "cooking_time", "image")
         read_only_fields = ("id", "author", "tags")
 
     def create(self, validated_data):
@@ -129,7 +130,7 @@ class RecipeFollowSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Recipe
-        fields = ("id", "name", "cooking_time",)
+        fields = ("id", "name", "image", "cooking_time",)
         read_only_fields = ("id",)
 
 
@@ -141,16 +142,7 @@ class FollowSerializer(serializers.ModelSerializer):
         model = User
         fields = ("id", "email", "first_name", "last_name",
                   "username", "recipes", "recipes_count",)
-        read_only_fields = ('id',)
+        read_only_fields = ("id",)
 
     def get_recipes_count(self, obj):
         return Recipe.objects.filter(author=obj).count()
-
-
-class FollowingSerializer(serializers.ModelSerializer):
-    user = FollowSerializer(read_only=True)
-
-    class Meta:
-        model = Follow
-        fields = ("user",)
-        read_only_fields = ()
