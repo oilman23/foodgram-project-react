@@ -24,6 +24,6 @@ docker-compose exec backend python manage.py loadjson --path ingredients.json # 
 # Доступ к проекту на удаленном сервере.
 Данный проект развернут на удаленном сервере и доступен по адрессу http://62.84.113.15
 
-#Доступ к админке
+#Доступ к админке.
 Username: admin
 Password: 123456
