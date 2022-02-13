@@ -3,7 +3,6 @@ from rest_framework import serializers
 
 from users.models import User
 from users.serializers import UserSerializer
-
 from .models import Ingredient, Recipe, RecipeIngredient, Tag
 from .utils import recipe_ingredient_create
 

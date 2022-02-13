@@ -14,7 +14,6 @@ from rest_framework.views import APIView
 from rest_framework.viewsets import ModelViewSet
 
 from users.permissions import AuthorOrReadOnly
-
 from .filters import RecipeFilter
 from .mixins import ListRetrieveViewSet
 from .models import (Favorite, Ingredient, Recipe, RecipeIngredient, Shopping,
