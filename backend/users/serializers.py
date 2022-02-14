@@ -1,7 +1,7 @@
 from django.shortcuts import get_object_or_404
 from rest_framework import serializers
 
-from .models import User
+from .models import User, Follow
 
 
 class UserSerializer(serializers.ModelSerializer):
@@ -21,10 +21,10 @@ class UserSerializer(serializers.ModelSerializer):
         return user
 
     def get_is_subscribed(self, obj):
-        author = self.context["request"].user
-        if author.is_anonymous:
+        user = self.context["request"].user
+        if user.is_anonymous:
             return False
-        return obj.follower.filter(author=author).exists()
+        return Follow.objects.filter(user=user, author=obj).exists()
 
 
 class PasswordSerializer(serializers.Serializer):

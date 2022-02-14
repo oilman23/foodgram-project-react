@@ -16,17 +16,22 @@ from .serializers import GetTokenSerializer, PasswordSerializer, UserSerializer
 
 
 class UserViewSet(ModelViewSet):
-    # queryset = User.objects.all()
+    queryset = User.objects.all()
     serializer_class = UserSerializer
     permission_classes = (AllowAny, )
     lookup_field = "id"
 
-    def get_queryset(self):
-        return User.objects.all().annotate(
-            is_subscribed=Exists(Follow.objects.filter(
-                user=self.request.user, author__pk=OuterRef('pk'))
-            )
-        )
+    # def get_queryset(self):
+    #     # return User.objects.all().annotate(
+    #     #     is_subscribed=Exists(Follow.objects.filter(
+    #     #         user=self.request.user, author__pk=OuterRef('pk'))
+    #     #     )
+    #     # )
+    #     is_subscribed = self.request.query_params.get(
+    #         "is_subscribed")
+    #     if is_subscribed is not None and int(is_subscribed) == 1:
+    #         return User.objects.filter(following__user=self.request.user)
+    #     return User.objects.all()
 
     @action(detail=False, methods=["get"],
             permission_classes=[IsAuthenticated])
