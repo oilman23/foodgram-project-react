@@ -18,7 +18,6 @@ services:
       - "5432:5432"
 
   backend:
-#    image: vlad2305/foodgram:latest
     build:
       context: ../backend
     restart: always
