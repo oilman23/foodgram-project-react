@@ -22,7 +22,6 @@ class TagSerializer(serializers.ModelSerializer):
 
 
 class IngredientRecipeGetSerializer(serializers.ModelSerializer):
-
     id = serializers.ReadOnlyField(source="ingredient.id")
     name = serializers.ReadOnlyField(source="ingredient.name")
     measurement_unit = serializers.ReadOnlyField(
@@ -47,10 +46,20 @@ class IngredientRecipeSerializer(serializers.ModelSerializer):
         fields = ("id", "amount", "recipe")
 
 
+class IngredientRecipe1Serializer(serializers.ModelSerializer):
+    amount = serializers.SerializerMethodField()
+
+    class Meta:
+        model = Ingredient
+        fields = ("id", "name", "measurement_unit", "amount")
+
+    def get_amount(self, obj):
+        return obj.amount.get().amount
+
+
 class RecipeGetSerializer(serializers.ModelSerializer):
     image = Base64ImageField(max_length=None, use_url=True)
-    ingredients = IngredientRecipeGetSerializer(source="recipe_ingredient",
-                                                many=True, read_only=True)
+    ingredients = IngredientRecipe1Serializer(many=True)
     author = UserSerializer(read_only=True)
     tags = TagSerializer(many=True, read_only=True)
     is_favorited = serializers.SerializerMethodField()
