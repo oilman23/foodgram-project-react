@@ -16,7 +16,7 @@ from .serializers import GetTokenSerializer, PasswordSerializer, UserSerializer
 
 
 class UserViewSet(ModelViewSet):
-    queryset = User.objects.all()
+    # queryset = User.objects.all()
     serializer_class = UserSerializer
     permission_classes = (AllowAny, )
     lookup_field = "id"
