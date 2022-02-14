@@ -5,7 +5,7 @@ from .models import (Favorite, Ingredient, Recipe, RecipeIngredient, Shopping,
 
 
 class RecipeAdmin(admin.ModelAdmin):
-    list_display = ("id", "name", "text", "cooking_time", "author", "image")
+    list_display = ("name", "id", "text", "cooking_time", "author", "image")
     search_fields = ("name",)
     list_filter = ("cooking_time", "author",)
     empty_value_display = "-пусто-"
@@ -13,7 +13,7 @@ class RecipeAdmin(admin.ModelAdmin):
 
 class IngredientAdmin(admin.ModelAdmin):
     list_display = ("name", "id", "measurement_unit",)
-    search_fields = ("name",)
+    search_fields = ("name", "measurement_unit",)
     list_filter = ()
     empty_value_display = "-пусто-"
 
@@ -34,14 +34,14 @@ class TagAdmin(admin.ModelAdmin):
 
 class FavoriteAdmin(admin.ModelAdmin):
     list_display = ("user", "id", "recipe",)
-    search_fields = ("user",)
+    search_fields = ("user", "recipe",)
     list_filter = ()
     empty_value_display = "-пусто-"
 
 
 class ShoppingAdmin(admin.ModelAdmin):
     list_display = ("user", "id", "recipe",)
-    search_fields = ("user",)
+    search_fields = ("user", "recipe",)
     list_filter = ()
     empty_value_display = "-пусто-"
 
