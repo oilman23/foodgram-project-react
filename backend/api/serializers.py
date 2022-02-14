@@ -46,20 +46,9 @@ class IngredientRecipeSerializer(serializers.ModelSerializer):
         fields = ("id", "amount", "recipe")
 
 
-class IngredientRecipe1Serializer(serializers.ModelSerializer):
-    amount = serializers.SerializerMethodField()
-
-    class Meta:
-        model = Ingredient
-        fields = ("id", "name", "measurement_unit", "amount")
-
-    def get_amount(self, obj):
-        return obj.amount.get().amount
-
-
 class RecipeGetSerializer(serializers.ModelSerializer):
     image = Base64ImageField(max_length=None, use_url=True)
-    ingredients = IngredientRecipe1Serializer(many=True)
+    ingredients = serializers.SerializerMethodField()
     author = UserSerializer(read_only=True)
     tags = TagSerializer(many=True, read_only=True)
     is_favorited = serializers.SerializerMethodField()
@@ -83,6 +72,11 @@ class RecipeGetSerializer(serializers.ModelSerializer):
         if user.is_anonymous:
             return False
         return obj.shopping.filter(user=user).exists()
+
+    def get_ingredients(self, obj):
+        recipe_ingredients = RecipeIngredient.objects.filter(recipe=obj)
+        return IngredientRecipeGetSerializer(recipe_ingredients,
+                                             many=True).data
 
 
 class RecipeSerializer(serializers.ModelSerializer):
@@ -143,8 +137,8 @@ class RecipeFollowSerializer(serializers.ModelSerializer):
 
 
 class FollowSerializer(serializers.ModelSerializer):
-    recipes = RecipeFollowSerializer(many=True, read_only=True)
     recipes_count = serializers.SerializerMethodField()
+    recipes = serializers.SerializerMethodField()
 
     class Meta:
         model = User
@@ -152,5 +146,9 @@ class FollowSerializer(serializers.ModelSerializer):
                   "username", "recipes", "recipes_count",)
         read_only_fields = ("id",)
 
-    def get_recipes_count(self, obj):
-        return Recipe.objects.filter(author=obj).count()
+    def get_recipes_count(self, author):
+        return Recipe.objects.filter(author=author).count()
+
+    def get_recipes(self, author):
+        recipes = author.recipes.all()[:3]
+        return RecipeFollowSerializer(recipes, many=True).data

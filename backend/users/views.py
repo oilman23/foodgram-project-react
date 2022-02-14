@@ -1,5 +1,4 @@
 from django.core.exceptions import ObjectDoesNotExist
-from django.db.models import Exists, OuterRef
 from django.shortcuts import get_object_or_404
 from rest_framework import generics, status
 from rest_framework.authtoken.models import Token
@@ -20,18 +19,6 @@ class UserViewSet(ModelViewSet):
     serializer_class = UserSerializer
     permission_classes = (AllowAny, )
     lookup_field = "id"
-
-    # def get_queryset(self):
-    #     # return User.objects.all().annotate(
-    #     #     is_subscribed=Exists(Follow.objects.filter(
-    #     #         user=self.request.user, author__pk=OuterRef('pk'))
-    #     #     )
-    #     # )
-    #     is_subscribed = self.request.query_params.get(
-    #         "is_subscribed")
-    #     if is_subscribed is not None and int(is_subscribed) == 1:
-    #         return User.objects.filter(following__user=self.request.user)
-    #     return User.objects.all()
 
     @action(detail=False, methods=["get"],
             permission_classes=[IsAuthenticated])
