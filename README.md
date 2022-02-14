@@ -1,4 +1,4 @@
-# praktikum_new_diplom
+# praktikum_new_diplom.
 Дипломный проект курса ЯндексПрактикум - Foodgram
 
 # Автор
