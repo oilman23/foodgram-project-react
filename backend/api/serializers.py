@@ -1,3 +1,4 @@
+from django.shortcuts import get_object_or_404
 from drf_extra_fields.fields import Base64ImageField
 from rest_framework import serializers
 
@@ -39,6 +40,7 @@ class IngredientRecipeSerializer(serializers.ModelSerializer):
     id = serializers.PrimaryKeyRelatedField(
         source="ingredient",
         queryset=Ingredient.objects.all(),
+
     )
 
     class Meta:
@@ -87,12 +89,25 @@ class RecipeSerializer(serializers.ModelSerializer):
         many=True,
     )
     image = Base64ImageField(max_length=None, use_url=True)
+    cooking_time = serializers.IntegerField(min_value=1)
 
     class Meta:
         model = Recipe
         fields = ("id", "author", "name", "text", "ingredients", "tags",
                   "cooking_time", "image")
         read_only_fields = ("id", "author", "tags")
+
+    def validate(self, data):
+        ingredients = self.initial_data.get('ingredients')
+        ingredients_list = []
+        for ingredient in ingredients:
+            ingredient_id = ingredient['id']
+            if ingredient_id in ingredients_list:
+                ingredient = get_object_or_404(Ingredient, id=ingredient_id)
+                raise serializers.ValidationError(
+                    f"Ингредиент {ingredient.name} выбран более 1 раза")
+            ingredients_list.append(ingredient_id)
+        return data
 
     def create(self, validated_data):
         ingredients_data = validated_data.pop("ingredients")
