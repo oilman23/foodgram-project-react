@@ -1,0 +1,6 @@
+[{"name": "Правильное питание", "color": "#32CD32", "slug":  "true_food"},
+  {"name": "Десерты", "color": "#A9A9A9", "slug":  "dessert"},
+  {"name": "Супы", "color": "#FF69B4", "slug":  "soups"},
+  {"name": "Мясо", "color": "#B22222", "slug":  "meat"},
+  {"name": "Вегитарианская еда", "color": "#F4A460", "slug":  "vegetarian_food"}
+]
